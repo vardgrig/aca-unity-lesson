@@ -5,7 +5,8 @@ namespace DefaultNamespace.Game
     public class PlayerHealth : MonoBehaviour
     {
         [SerializeField] private float defaultHealth;
-        [SerializeField] private float currentHealth;
+
+        private float currentHealth;
 
         private void Start()
         {

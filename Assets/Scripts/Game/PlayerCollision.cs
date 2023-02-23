@@ -1,35 +1,23 @@
-using System;
 using UnityEngine;
 
 namespace DefaultNamespace.Game
 {
-    public delegate void ItemCollect(float amount);
+    public delegate void ItemCollect(IItem item);
+
     public class PlayerCollision : MonoBehaviour
     {
         public event ItemCollect OnItemCollected;
 
         private void OnTriggerEnter2D(Collider2D other)
         {
-            Fruit fruit = other.transform.parent.GetComponent<Fruit>();
-            if (fruit == null)
+            IItem item = other.transform.parent.GetComponent<IItem>();
+            if (item == null)
             {
                 return;
             }
 
-            fruit.ChangeColor(Color.red);
-            // fruit.gameObject.SetActive(false);
-            OnItemCollected?.Invoke(fruit.Value);
-        }
-
-        private void OnTriggerExit2D(Collider2D other)
-        {
-            Fruit fruit = other.transform.parent.GetComponent<Fruit>();
-            if (fruit == null)
-            {
-                return;
-            }
-
-            fruit.RevertColor();
+            item.DeActivate();
+            OnItemCollected?.Invoke(item);
         }
     }
 }

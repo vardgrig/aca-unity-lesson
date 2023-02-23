@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace DefaultNamespace.Game
@@ -6,7 +7,9 @@ namespace DefaultNamespace.Game
     {
         [SerializeField] private PlayerHealth playerHealth;
         [SerializeField] private PlayerMovement playerMovement;
+        [SerializeField] private PlayerBank playerBank;
         [SerializeField] private PlayerCollision playerCollision;
+        public event Action OnEat;
 
         private void OnEnable()
         {
@@ -18,9 +21,24 @@ namespace DefaultNamespace.Game
             playerCollision.OnItemCollected -= OnItemCollected;
         }
 
-        private void OnItemCollected(float amount)
+        private void OnItemCollected(IItem item)
         {
-            playerHealth.Change(amount);
+            switch (item)
+            {
+                case Bomb bomb:
+                    playerHealth.Change(bomb.DamageAmount);
+                    break;
+                case Coin coin:
+                    playerBank.Add(coin.Value);
+                    break;
+                case Heart heart:
+                    playerHealth.Change(heart.Value);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(item));
+            }
+
+            OnEat?.Invoke();
         }
     }
 }
