@@ -15,8 +15,7 @@ namespace DefaultNamespace.Game
             {
                 return;
             }
-
-            item.DeActivate();
+            
             OnItemCollected?.Invoke(item);
         }
     }

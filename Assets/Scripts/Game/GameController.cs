@@ -34,22 +34,25 @@ namespace DefaultNamespace.Game
              */
 
             float randomValue = Random.value;
-            if (randomValue >= 0f && randomValue <= 0.42f)
+            if (randomValue >= 0f && randomValue <= 0.2f)
             {
-                spawner.Spawn(SpawnType.Coin);
+                spawner.Spawn<Coin>();
             }
-            else if (randomValue >= 0.5f && randomValue <= 0.7f)
+            else if (randomValue >= 0.2f && randomValue <= 0.4f)
             {
-                spawner.Spawn(SpawnType.Bomb);
+                spawner.Spawn<Heart>();
             }
-            else if (randomValue >= 0.75f && randomValue <= 1f)
+            else if (randomValue >= 0.4f && randomValue <= 0.6f)
             {
-                spawner.Spawn(SpawnType.Heart);
+                spawner.Spawn<ExtraHeart>();
             }
-            else
+            else if (randomValue >= 0.6f && randomValue <= 0.8f)
             {
-                //Nothing to spawn
-                Debug.Log("Nothing to spawn");
+                spawner.Spawn<Bomb>();
+            }
+            else if (randomValue >= 0.8f && randomValue <= 1f)
+            {
+                spawner.Spawn<Invulnerable>();
             }
         }
     }

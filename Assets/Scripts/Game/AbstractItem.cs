@@ -6,12 +6,11 @@ namespace DefaultNamespace.Game
     {
         public virtual void Activate()
         {
-            gameObject.SetActive(true);
         }
 
         public virtual void DeActivate()
         {
-            gameObject.SetActive(false);
+            Destroy(gameObject);
         }
     }
 }

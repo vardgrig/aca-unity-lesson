@@ -6,10 +6,5 @@ namespace DefaultNamespace.Game
     {
         [SerializeField] private float value;
         public float Value => value;
-
-        public override void Activate()
-        {
-            
-        }
     }
 }

@@ -6,24 +6,40 @@ namespace DefaultNamespace.Game
     {
         [SerializeField] private float defaultHealth;
 
-        private float currentHealth;
+        private float _currentHealth;
+        private bool _freezeHealth;
 
         private void Start()
         {
-            currentHealth = defaultHealth;
+            SetDefault();
         }
 
         public void Change(float amount)
         {
-            if (Mathf.Abs(amount) <= currentHealth)
+            if (_freezeHealth)
             {
-                currentHealth += amount;
+                return;
             }
 
-            if (currentHealth == 0f)
+            if (Mathf.Abs(amount) <= _currentHealth)
+            {
+                _currentHealth += amount;
+            }
+
+            if (_currentHealth == 0f)
             {
                 Die();
             }
+        }
+
+        public void SetDefault()
+        {
+            _currentHealth = defaultHealth;
+        }
+
+        public void FreezeHealth(bool state)
+        {
+            _freezeHealth = state;
         }
 
         private void Die()
