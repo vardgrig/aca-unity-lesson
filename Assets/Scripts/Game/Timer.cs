@@ -1,4 +1,6 @@
 using System;
+using System.Collections;
+using Unity.VisualScripting;
 using UnityEngine;
 
 namespace DefaultNamespace.Game
@@ -15,21 +17,43 @@ namespace DefaultNamespace.Game
         public event Action<float> OnTick;
         public event Action OnComplete;
 
-        private void Update()
+
+        // private void Update()
+        // {
+        //     // 1 sec -> 60 fps
+        //     // 5 sec -> ~300 fps
+        //     if (!_isRunning)
+        //     {
+        //         return;
+        //     }
+        //
+        //     _current -= Time.deltaTime;
+        //     if (_current <= 0f)
+        //     {
+        //         _current = 0f;
+        //         Complete();
+        //     }
+        //     Debug.Log("Update: " + _current);
+        //
+        //     OnTick?.Invoke(_current);
+        // }
+
+        private IEnumerator CountDownEnumerator()
         {
-            if (!_isRunning)
+            float delta = 1f;
+            while (_current > 0f)
             {
-                return;
+                yield return new WaitForSeconds(delta);
+                Debug.Log("Enumerating: " + _current);
+                _current -= delta;
+                OnTick?.Invoke(_current);
             }
 
-            _current -= Time.deltaTime;
             if (_current <= 0f)
             {
                 _current = 0f;
                 Complete();
             }
-
-            OnTick?.Invoke(_current);
         }
 
         private void Complete()
@@ -47,6 +71,8 @@ namespace DefaultNamespace.Game
             _defaultValue = value;
             ResetTimer();
             _isRunning = true;
+            IEnumerator result = CountDownEnumerator();
+            Coroutine coroutine = StartCoroutine(result);
             OnStart?.Invoke();
         }
 
