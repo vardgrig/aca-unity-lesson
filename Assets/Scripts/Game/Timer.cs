@@ -17,27 +17,6 @@ namespace DefaultNamespace.Game
         public event Action<float> OnTick;
         public event Action OnComplete;
 
-
-        // private void Update()
-        // {
-        //     // 1 sec -> 60 fps
-        //     // 5 sec -> ~300 fps
-        //     if (!_isRunning)
-        //     {
-        //         return;
-        //     }
-        //
-        //     _current -= Time.deltaTime;
-        //     if (_current <= 0f)
-        //     {
-        //         _current = 0f;
-        //         Complete();
-        //     }
-        //     Debug.Log("Update: " + _current);
-        //
-        //     OnTick?.Invoke(_current);
-        // }
-
         private IEnumerator CountDownEnumerator()
         {
             float delta = 1f;
