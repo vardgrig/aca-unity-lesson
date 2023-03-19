@@ -9,6 +9,8 @@ namespace DefaultNamespace.Runner
         [SerializeField] private float movementMaxSpeed;
 
         private readonly int Speed = Animator.StringToHash("Speed");
+        private readonly int Jump = Animator.StringToHash("Jump");
+
 
         public void SetState(CharacterState state, float value)
         {
@@ -16,6 +18,9 @@ namespace DefaultNamespace.Runner
             {
                 case CharacterState.Movement:
                     animator.SetFloat(Speed, value * movementMaxSpeed);
+                    break;
+                case CharacterState.Jumping:
+                    animator.SetTrigger(Jump);
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(state), state, null);
