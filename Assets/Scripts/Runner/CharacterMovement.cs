@@ -1,8 +1,5 @@
-using System;
 using DefaultNamespace.Runner;
-using Unity.VisualScripting;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 public enum CharacterState
 {
@@ -14,74 +11,89 @@ public enum CharacterState
 
 public class CharacterMovement : MonoBehaviour
 {
-    [SerializeField] private LayerMask groundLayer;
-    [SerializeField] private MobileInput mobileInput;
+    [Header("Character")]
     [SerializeField] private Rigidbody playerRigidbody;
     [SerializeField] private PlayerAnimator playerAnimator;
     [SerializeField] private CapsuleCollider capsuleCollider;
+
+    [Header("Character's Attributes")]
     [SerializeField] private float movementSpeed;
     [SerializeField] private float movementSpeedJumping;
+    [SerializeField] private float groundCheckDistance = 0.1f;
+    [SerializeField] private float jumpForce;
+
+    [Header("Envorinment Settings")]
+    [SerializeField] private float borderX;
+
+    [Header("Settings")]
+    [SerializeField] private LayerMask groundLayer;
+    [SerializeField] private MobileInput mobileInput;
 
     private bool isGrounded = true;
 
-    [SerializeField] private float groundCheckDistance = 0.1f;
-
-    [SerializeField] private float jumpForce;
-    [SerializeField] private float forwardJumpMultiplier = 0.5f;
-
-    [SerializeField] private float borderX;
-
-
-    private void Update()
+    private void Start()
     {
-        Jump();
+        SwipeManager.instance.MoveEvent += SwipeMovement;
     }
 
     private void FixedUpdate()
     {
         IsGrounded();
-        Move();
+        MoveForward();
+    }
+    void SwipeMovement(bool[] swipe)
+    {
+        //Move Left
+        if (swipe[(int)SwipeManager.Direction.Left])
+        {
+            MoveLeft();
+            Debug.Log("Left");
+        }
+        //Move Right
+        else if (swipe[(int)SwipeManager.Direction.Right])
+        {
+            MoveRight();
+            Debug.Log("Right");
+        }
+        //Jump
+        else
+        {
+            Jump();
+            Debug.Log("Jump");
+        }
     }
 
-    private void Move()
+    private void MoveForward()
     {
-        // float horizontal = Input.GetAxis("Horizontal");
-        // float forward = Input.GetAxis("Vertical");
-        // Vector3 input = new(horizontal, 0f, forward);
-        Vector2 mobileInputValue = this.mobileInput.GetInput();
-        Vector3 input = new Vector3(mobileInputValue.x, 0f, mobileInputValue.y);
-        Debug.LogError(input);
-        Vector3 movement = input * Time.fixedDeltaTime;
+        Vector3 movement = Vector3.forward * Time.fixedDeltaTime;
         movement.x *= movementSpeed;
         movement.z *= isGrounded ? movementSpeed : movementSpeedJumping;
         Vector3 pos = transform.position + movement;
         pos.x = Mathf.Clamp(pos.x, -borderX, borderX);
-        
+
         playerRigidbody.MovePosition(pos);
         if (isGrounded)
         {
-            SetState(CharacterState.Movement, mobileInputValue.y);
+            SetState(CharacterState.Movement, Vector3.forward.magnitude);
         }
+    }
+    private void MoveLeft()
+    {
+        Vector3 moveDirection = Vector3.forward + Vector3.left * jumpForce;
+        playerRigidbody.MovePosition(moveDirection);
+    }
+
+    private void MoveRight()
+    {
+        Vector3 moveDirection = Vector3.forward + Vector3.right * jumpForce;
+        playerRigidbody.MovePosition(moveDirection);
     }
 
     private void Jump()
     {
-
-        if (Input.GetKeyDown(KeyCode.Space) && isGrounded)
+        if (isGrounded)
         {
-            float horizontal = Input.GetAxis("Horizontal");
-            float forward = Input.GetAxis("Vertical");
-
-            Vector3 jumpDirection = (forward * forwardJumpMultiplier * transform.forward) +
-                                    (horizontal * forwardJumpMultiplier * transform.right) + (Vector3.up * jumpForce);
-
-            //if (jumpDirection.x > borderX)
-            //    jumpDirection.x = borderX;
-
-            //else if (jumpDirection.x < -borderX)
-            //    jumpDirection.x = -borderX;
-
-
+            Vector3 jumpDirection = Vector3.forward + Vector3.up * jumpForce;
             playerRigidbody.AddForce(jumpDirection, ForceMode.Impulse);
             isGrounded = false;
             SetState(CharacterState.Jumping);
