@@ -1,3 +1,5 @@
+using System;
+using System.Collections;
 using DefaultNamespace.Runner;
 using UnityEngine;
 
@@ -11,92 +13,142 @@ public enum CharacterState
 
 public class CharacterMovement : MonoBehaviour
 {
-    [Header("Character")]
+    [SerializeField] private LayerMask groundLayer;
+    [SerializeField] private SwipeManager swipeManager;
+    [SerializeField] private CharacterMovementBounds movementBounds;
     [SerializeField] private Rigidbody playerRigidbody;
     [SerializeField] private PlayerAnimator playerAnimator;
     [SerializeField] private CapsuleCollider capsuleCollider;
-
-    [Header("Character's Attributes")]
     [SerializeField] private float movementSpeed;
     [SerializeField] private float movementSpeedJumping;
-    [SerializeField] private float groundCheckDistance = 0.1f;
-    [SerializeField] private float jumpForce;
-
-    [Header("Envorinment Settings")]
-    [SerializeField] private float borderX;
-
-    [Header("Settings")]
-    [SerializeField] private LayerMask groundLayer;
-    [SerializeField] private MobileInput mobileInput;
+    [SerializeField] private float movementLeftRightTime = 0.3f;
 
     private bool isGrounded = true;
 
-    private void Start()
+    [SerializeField] private float groundCheckDistance = 0.1f;
+
+    [SerializeField] private float jumpForce;
+    [SerializeField] private float forwardJumpMultiplier = 0.5f;
+
+    bool isGameStarted = false;
+    Vector3 startPos;
+
+    private int currentIndex = 1;
+
+    private Coroutine leftRightCoroutine;
+
+    private void OnEnable()
     {
-        SwipeManager.instance.MoveEvent += SwipeMovement;
+        swipeManager.OnSwipe += OnSwipe;
+        GameManager.instance.OnGameStarted += OnGameStarted;
+        GameManager.instance.OnGameOver += OnGameOver;
+        startPos = transform.position;
     }
+
+    private void OnDisable()
+    {
+        swipeManager.OnSwipe -= OnSwipe;
+    }
+
+    public int GetDistance()
+    {
+        return (int)transform.position.z;
+    }
+
+    private void OnSwipe(SwipeDirection direction)
+    {
+        switch (direction)
+        {
+            case SwipeDirection.Left:
+            case SwipeDirection.Right:
+                HandleHorizontalMovement(direction);
+                break;
+            case SwipeDirection.Up:
+                Jump();
+                break;
+            case SwipeDirection.Down:
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(direction), direction, null);
+        }
+    }
+
+    private void HandleHorizontalMovement(SwipeDirection swipeDirection)
+    {
+        int desiredIndex = movementBounds.GetNextIndex(swipeDirection, currentIndex);
+        currentIndex = desiredIndex;
+        Vector3 desiredPosition = movementBounds.GetPosition(desiredIndex);
+        RunCoroutine(MovePlayerToPosition(desiredPosition, movementLeftRightTime));
+    }
+
+    private void RunCoroutine(IEnumerator enumerator)
+    {
+        if (leftRightCoroutine != null)
+        {
+            StopCoroutine(leftRightCoroutine);
+            leftRightCoroutine = null;
+        }
+
+        leftRightCoroutine = StartCoroutine(enumerator);
+    }
+
+    private IEnumerator MovePlayerToPosition(Vector3 position, float time)
+    {
+        Vector3 currentPosition = playerRigidbody.position;
+        float delta = 0f;
+        while (delta <= time)
+        {
+            delta += Time.deltaTime;
+            float percent = delta / time;
+            currentPosition.z = position.z = playerRigidbody.position.z;
+            currentPosition.y = position.y = playerRigidbody.position.y;
+            playerRigidbody.position = Vector3.Lerp(currentPosition, position, percent);
+            yield return null;
+        }
+    }
+
 
     private void FixedUpdate()
     {
-        IsGrounded();
-        MoveForward();
-    }
-    void SwipeMovement(bool[] swipe)
-    {
-        //Move Left
-        if (swipe[(int)SwipeManager.Direction.Left])
+        if (isGameStarted)
         {
-            MoveLeft();
-            Debug.Log("Left");
-        }
-        //Move Right
-        else if (swipe[(int)SwipeManager.Direction.Right])
-        {
-            MoveRight();
-            Debug.Log("Right");
-        }
-        //Jump
-        else
-        {
-            Jump();
-            Debug.Log("Jump");
+            IsGrounded();
+            Move();
         }
     }
 
-    private void MoveForward()
+    void OnGameStarted()
     {
-        Vector3 movement = Vector3.forward * Time.fixedDeltaTime;
-        movement.x *= movementSpeed;
-        movement.z *= isGrounded ? movementSpeed : movementSpeedJumping;
-        Vector3 pos = transform.position + movement;
-        pos.x = Mathf.Clamp(pos.x, -borderX, borderX);
+        transform.position = startPos;
+        isGameStarted = true;
+    }
 
-        playerRigidbody.MovePosition(pos);
+    void OnGameOver()
+    {
+        isGameStarted = false;
+    }
+
+    private void Move()
+    {
+        Vector3 velocity = playerRigidbody.velocity;
+        velocity.z = isGrounded ? movementSpeed : forwardJumpMultiplier * movementSpeed;
+        playerRigidbody.velocity = velocity;
         if (isGrounded)
         {
-            SetState(CharacterState.Movement, Vector3.forward.magnitude);
+            SetState(CharacterState.Movement, 1f);
         }
-    }
-    private void MoveLeft()
-    {
-        Vector3 moveDirection = Vector3.forward + Vector3.left * jumpForce;
-        playerRigidbody.MovePosition(moveDirection);
-    }
-
-    private void MoveRight()
-    {
-        Vector3 moveDirection = Vector3.forward + Vector3.right * jumpForce;
-        playerRigidbody.MovePosition(moveDirection);
     }
 
     private void Jump()
     {
         if (isGrounded)
         {
-            Vector3 jumpDirection = Vector3.forward + Vector3.up * jumpForce;
-            playerRigidbody.AddForce(jumpDirection, ForceMode.Impulse);
+            var velocity = playerRigidbody.velocity;
+            velocity.y = jumpForce;
+            playerRigidbody.velocity = velocity;
             isGrounded = false;
             SetState(CharacterState.Jumping);
+            AudioManager.instance.Play("Jump");
         }
     }
 

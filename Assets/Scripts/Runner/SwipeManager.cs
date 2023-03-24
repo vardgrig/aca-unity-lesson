@@ -1,86 +1,76 @@
+using System;
 using UnityEngine;
-
-public delegate void MoveDelegate(bool[] swipes);
+public enum SwipeDirection
+{
+    Left,
+    Right,
+    Up,
+    Down,
+}
 public class SwipeManager : MonoBehaviour
 {
-    public static SwipeManager instance;
-    public enum Direction { Left, Right, Up }
-    bool[] swipe = new bool[3];
+    [SerializeField] private Camera mainCamera;
+    [SerializeField] private float delta;
+    public event Action<SwipeDirection> OnSwipe;
 
-    Vector2 startTouch;
-    bool touchMoved;
-    Vector2 swipeDelta;
+    private bool _isDragging;
+    private Vector3 _startPosition;
+    private Vector3 _endPosition;
 
-    const float SWIPE_THRESHOLD = 50;
-    public MoveDelegate MoveEvent;
+    private bool canSwipe = false;
 
-    Vector2 TouchPosition() { return (Vector2)Input.mousePosition; }
-    bool TouchBegan() { return Input.GetMouseButtonDown(0); }
-    bool TouchEnded() { return Input.GetMouseButtonUp(0); }
-    bool GetTouch() { return Input.GetMouseButton(0); }
-
-    private void Awake()
+    private void Start()
     {
-        if(instance == null)
-        {
-            instance = this;
-        }
-    }
-    private void OnEnable()
-    {
-        instance.enabled = true;
-    }
-    private void OnDisable()
-    {
-        instance.enabled = false;
+        GameManager.instance.OnGameStarted += GameStarted;
+        GameManager.instance.OnGameOver += GameEnded;
     }
 
-    void Update()
+    void GameStarted()
     {
-        if(TouchBegan())
+        canSwipe = true;
+    }
+    void GameEnded()
+    {
+        canSwipe = false;
+    }
+    private void Update()
+    {
+        if (!canSwipe)
+            return;
+
+        if (Input.GetMouseButtonDown(0))
         {
-            startTouch = TouchPosition();
-            touchMoved = true;
-        }
-        else if(TouchEnded() == touchMoved)
-        {
-            SendSwipe();
-            touchMoved = false;
+            _isDragging = true;
+            _startPosition = Input.mousePosition;
         }
 
-        swipeDelta = Vector2.zero;
-        if(touchMoved && GetTouch())
+        if (Input.GetMouseButtonUp(0))
         {
-            swipeDelta = TouchPosition() - startTouch;
+            _isDragging = false;
+            _endPosition = Input.mousePosition;
         }
 
-        if(swipeDelta.magnitude > SWIPE_THRESHOLD)
+        Vector3 dir = _endPosition - _startPosition;
+
+
+        if (dir.magnitude >= delta && !_isDragging)
         {
-            if(Mathf.Abs(swipeDelta.x) > Mathf.Abs(swipeDelta.y))
+            if (Mathf.Abs(dir.x) > Mathf.Abs(dir.y))
             {
-                swipe[(int)Direction.Left] = swipeDelta.x < 0;
-                swipe[(int)Direction.Right] = swipeDelta.x > 0;
+                SwipeComplete(dir.x < 0 ? SwipeDirection.Left : SwipeDirection.Right);
             }
             else
             {
-                swipe[(int)Direction.Up] = swipeDelta.y > 0;
+                SwipeComplete(dir.y < 0 ? SwipeDirection.Down : SwipeDirection.Up);
             }
-            SendSwipe();
+
+
+            _startPosition = _endPosition = Vector3.zero;
         }
     }
 
-    void SendSwipe()
+    private void SwipeComplete(SwipeDirection swipeDirection)
     {
-        if (swipe[0] || swipe[1] || swipe[2]) 
-        {
-            MoveEvent?.Invoke(swipe);
-        }
-        Reset();
-    }
-    private void Reset()
-    {
-        startTouch = swipeDelta = Vector2.zero;
-        touchMoved = false;
-        for(int i = 0; i < swipe.Length; i++) { swipe[i] = false; }
+        OnSwipe?.Invoke(swipeDirection);
     }
 }

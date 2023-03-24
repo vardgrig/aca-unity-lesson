@@ -1,5 +1,5 @@
-using System;
 using System.Collections.Generic;
+using System.Collections;
 using UnityEngine;
 
 public class RoadSpawner : MonoBehaviour
@@ -9,12 +9,16 @@ public class RoadSpawner : MonoBehaviour
     public float distanceBetweenPlatforms = 10f;
     public Transform playerTransform;
     Vector3 lastPosition;
+    bool isGameStarted = false;
 
     private Queue<GameObject> platformPool = new();
     private List<GameObject> activePlatforms = new();
 
+
     void Start()
     {
+        GameManager.instance.OnGameStarted += OnGameStarted;
+        GameManager.instance.OnGameOver += OnGameOver;
         Vector3 spawnPosition = Vector3.zero;
         for (int i = 0; i < numberOfPlatforms; i++)
         {
@@ -31,14 +35,39 @@ public class RoadSpawner : MonoBehaviour
         }
     }
 
+    void OnGameOver()
+    {
+        isGameStarted = false;
+    }
+    IEnumerator ResetPosition()
+    {
+        yield return new WaitForSeconds(0.2f);
+        var spawnPosition = Vector3.zero;
+        foreach (var road in activePlatforms)
+        {
+            road.transform.position = spawnPosition;
+            lastPosition = spawnPosition;
+            spawnPosition += Vector3.forward * distanceBetweenPlatforms;
+        }
+    }
+
     void Update()
     {
-        if (playerTransform.position.z > activePlatforms[1].transform.position.z)
+        if (isGameStarted)
         {
-            DespawnPlatform(activePlatforms[0]);
-            lastPosition = activePlatforms[^1].transform.position + Vector3.forward * distanceBetweenPlatforms;
-            SpawnPlatform(lastPosition);
+            if (playerTransform.position.z > activePlatforms[1].transform.position.z)
+            {
+                DespawnPlatform(activePlatforms[0]);
+                lastPosition = activePlatforms[^1].transform.position + Vector3.forward * distanceBetweenPlatforms;
+                SpawnPlatform(lastPosition);
+            }
         }
+    }
+
+    void OnGameStarted()
+    {
+        StartCoroutine(ResetPosition());
+        isGameStarted = true;
     }
 
     void SpawnPlatform(Vector3 position)
