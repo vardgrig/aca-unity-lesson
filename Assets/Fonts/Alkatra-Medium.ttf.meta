@@ -1,0 +1,24 @@
+fileFormatVersion: 2
+guid: a91fedc43ae314a23b014cdc82a7509d
+TrueTypeFontImporter:
+  externalObjects: {}
+  serializedVersion: 4
+  fontSize: 16
+  forceTextureCase: -2
+  characterSpacing: 0
+  characterPadding: 1
+  includeFontData: 1
+  fontNames:
+  - Alkatra
+  fallbackFontReferences:
+  - {fileID: 12800000, guid: 5041eeecf81b7486aaabaacd00573b62, type: 3}
+  - {fileID: 12800000, guid: c7bd2d5403c5e4e7c9096f8b7318716b, type: 3}
+  - {fileID: 12800000, guid: 663b881a684364fed883074fce856085, type: 3}
+  customCharacters: 
+  fontRenderingMode: 0
+  ascentCalculationMode: 1
+  useLegacyBoundsCalculation: 0
+  shouldRoundAdvanceValue: 1
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

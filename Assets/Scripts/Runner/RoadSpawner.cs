@@ -1,24 +1,22 @@
 using System.Collections.Generic;
-using System.Collections;
 using UnityEngine;
 
 public class RoadSpawner : MonoBehaviour
 {
-    public GameObject platformPrefab;
-    public int numberOfPlatforms = 4;
-    public float distanceBetweenPlatforms = 10f;
-    public Transform playerTransform;
-    Vector3 lastPosition;
-    bool isGameStarted = false;
+    [SerializeField] private GameObject platformPrefab;
+    [SerializeField] private int numberOfPlatforms = 4;
+    [SerializeField] private float distanceBetweenPlatforms = 10f;
+    [SerializeField] private Transform playerTransform;
 
-    private Queue<GameObject> platformPool = new();
-    private List<GameObject> activePlatforms = new();
+    private Vector3 _lastPosition;
 
+    private readonly Queue<GameObject> platformPool = new();
+    private readonly List<GameObject> activePlatforms = new();
 
-    void Start()
+    private bool _canSpawn;
+
+    public void Init()
     {
-        GameManager.instance.OnGameStarted += OnGameStarted;
-        GameManager.instance.OnGameOver += OnGameOver;
         Vector3 spawnPosition = Vector3.zero;
         for (int i = 0; i < numberOfPlatforms; i++)
         {
@@ -30,47 +28,45 @@ public class RoadSpawner : MonoBehaviour
         for (int i = 0; i < numberOfPlatforms; i++)
         {
             SpawnPlatform(spawnPosition);
-            lastPosition = spawnPosition;
+            _lastPosition = spawnPosition;
             spawnPosition += distanceBetweenPlatforms * Vector3.forward;
         }
     }
 
-    void OnGameOver()
+    public void SetCanSpawnState(bool state)
     {
-        isGameStarted = false;
+        _canSpawn = state;
     }
-    IEnumerator ResetPosition()
+
+    public void ResetPositions()
     {
-        yield return new WaitForSeconds(0.2f);
-        var spawnPosition = Vector3.zero;
-        foreach (var road in activePlatforms)
+        Vector3 spawnPosition = Vector3.zero;
+        for (int i = 0; i < activePlatforms.Count; i++)
         {
-            road.transform.position = spawnPosition;
-            lastPosition = spawnPosition;
-            spawnPosition += Vector3.forward * distanceBetweenPlatforms;
+            activePlatforms[i].transform.position = spawnPosition;
+            _lastPosition = spawnPosition;
+            spawnPosition += distanceBetweenPlatforms * Vector3.forward;
         }
     }
 
-    void Update()
+    public void UpdateFrame()
     {
-        if (isGameStarted)
+        if (!_canSpawn)
         {
-            if (playerTransform.position.z > activePlatforms[1].transform.position.z)
-            {
-                DespawnPlatform(activePlatforms[0]);
-                lastPosition = activePlatforms[^1].transform.position + Vector3.forward * distanceBetweenPlatforms;
-                SpawnPlatform(lastPosition);
-            }
+            return;
         }
+
+        if (!(playerTransform.position.z > activePlatforms[1].transform.position.z))
+        {
+            return;
+        }
+
+        DespawnPlatform(activePlatforms[0]);
+        _lastPosition = activePlatforms[^1].transform.position + Vector3.forward * distanceBetweenPlatforms;
+        SpawnPlatform(_lastPosition);
     }
 
-    void OnGameStarted()
-    {
-        StartCoroutine(ResetPosition());
-        isGameStarted = true;
-    }
-
-    void SpawnPlatform(Vector3 position)
+    private void SpawnPlatform(Vector3 position)
     {
         GameObject platform = platformPool.Dequeue();
         platform.SetActive(true);
@@ -78,7 +74,7 @@ public class RoadSpawner : MonoBehaviour
         activePlatforms.Add(platform);
     }
 
-    void DespawnPlatform(GameObject platform)
+    private void DespawnPlatform(GameObject platform)
     {
         platform.SetActive(false);
         activePlatforms.Remove(platform);

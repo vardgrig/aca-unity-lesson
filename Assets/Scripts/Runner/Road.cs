@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using DefaultNamespace.Runner;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -40,10 +39,25 @@ public class Road : MonoBehaviour
     private void Start()
     {
         SetupRoad();
+        
     }
     
+
+    public void SetFillPercent()
+    {
+        var difficultyValue = PlayerPrefs.GetInt("Difficulty");
+        if(difficultyValue == 0)
+        {
+            fillPercent = 0.5f;
+        }
+        else
+        {
+            fillPercent = 1;
+        }
+    }
     private void SetupRoad()
     {
+        SetFillPercent();
         int totalObstaclePointCount = 0;
         for (int i = 0; i < _obstacleSpawnPoints.Length; i++)
         {

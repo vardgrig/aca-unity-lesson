@@ -5,23 +5,23 @@ public class CharacterMovementBounds : MonoBehaviour
 {
     [SerializeField] private Vector3[] bounds;
 
-    //private void OnDrawGizmos()
-    //{
-    //    Gizmos.color = Color.magenta;
+    private void OnDrawGizmos()
+    {
+        Gizmos.color = Color.magenta;
 
-    //    if (bounds == null || bounds.Length == 0)
-    //    {
-    //        return;
-    //    }
+        if (bounds == null || bounds.Length == 0)
+        {
+            return;
+        }
 
-    //    for (int i = 0; i < bounds.Length; i++)
-    //    {
-    //        Vector3 position = transform.position;
-    //        position.x = 0f;
-    //        position += bounds[i];
-    //        Gizmos.DrawWireCube(position, Vector3.one);
-    //    }
-    //}
+        for (int i = 0; i < bounds.Length; i++)
+        {
+            Vector3 position = transform.position;
+            position.x = 0f;
+            position += bounds[i];
+            Gizmos.DrawWireCube(position, Vector3.one);
+        }
+    }
 
     public int GetNextIndex(SwipeDirection swipeDirection, int currentIndex)
     {
@@ -48,4 +48,5 @@ public class CharacterMovementBounds : MonoBehaviour
     {
         return bounds[index];
     }
+
 }
